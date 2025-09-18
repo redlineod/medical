@@ -198,3 +198,29 @@ Example 400:
   - Patient listing currently formats visit times in UTC.
 - Pagination is zero-based (`page=0` is the first page).
 - Database is initialized from `data.sql` at startup. Use Dockerized MySQL or provide compatible credentials.
+
+
+
+## Frontend UI
+A modern React + Vite single-page app is included to interact with this API.
+
+Features:
+- Patients list with search, pagination and filter by doctor IDs
+- Create Visit form (validates inputs and shows API errors)
+- Clean UI with Tailwind CSS
+
+Location: `frontend/`
+
+Run locally:
+1) Start the backend (default on http://localhost:8080)
+   - Windows: `mvnw.cmd spring-boot:run`
+2) In another terminal, start the frontend dev server:
+   - `cd frontend`
+   - `npm install`
+   - `npm run dev`
+3) Open http://localhost:5173
+
+Notes:
+- The dev server is configured to proxy `/api` to `http://localhost:8080` to avoid CORS issues.
+- The Patients page accepts comma-separated doctor IDs for filtering (e.g., `3` or `1,3`).
+- The Create Visit page expects `datetime-local` values; ensure you enter times in the doctor's timezone (as per the backend rules).
