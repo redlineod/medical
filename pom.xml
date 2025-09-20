@@ -123,6 +123,25 @@
 					</excludes>
 				</configuration>
 			</plugin>
+			<plugin>
+    <groupId>org.springdoc</groupId>
+    <artifactId>springdoc-openapi-maven-plugin</artifactId>
+    <version>1.5</version>
+    <executions>
+        <execution>
+            <phase>integration-test</phase>
+            <goals>
+                <goal>generate</goal>
+            </goals>
+        </execution>
+    </executions>
+    <configuration>
+        <apiDocsUrl>http://localhost:8080/api-docs</apiDocsUrl>
+        <outputFileName>api.json</outputFileName>
+        <outputDir>${project.build.directory}/docs</outputDir>
+        <skip>false</skip>
+    </configuration>
+</plugin>
 		</plugins>
 	</build>
 
