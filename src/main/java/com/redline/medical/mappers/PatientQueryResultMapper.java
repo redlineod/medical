@@ -2,6 +2,7 @@ package com.redline.medical.mappers;
 
 import com.redline.medical.dto.DoctorDto;
 import com.redline.medical.dto.PatientDto;
+import com.redline.medical.dto.PatientsGetResponse;
 import com.redline.medical.dto.VisitDto;
 import org.springframework.stereotype.Component;
 
@@ -19,8 +20,11 @@ public class PatientQueryResultMapper {
 
     private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 
-    public List<PatientDto> convertToPatientDtos(List<Object[]> queryResults) {
+    public PatientsGetResponse convertToPatientGetResponse(List<Object[]> queryResults) {
         Map<Long, PatientDto> patientMap = new LinkedHashMap<>();
+
+        int totalPatients = queryResults.isEmpty() ? 0 :
+                (queryResults.getFirst()[8] != null ? ((Number) queryResults.getFirst()[8]).intValue() : 0);
 
         for (Object[] row : queryResults) {
             Long patientId = ((Number) row[0]).longValue();
@@ -30,7 +34,7 @@ public class PatientQueryResultMapper {
             Timestamp endTimestamp = (Timestamp) row[4];
             String doctorFirstName = (String) row[5];
             String doctorLastName = (String) row[6];
-            Integer totalPatients = row[7] != null ? ((Number) row[7]).intValue() : 0;
+            Integer totalDoctorPatients = row[7] != null ? ((Number) row[7]).intValue() : 0;
 
             PatientDto patientDto = patientMap.computeIfAbsent(patientId, id ->
                     PatientDto.builder()
@@ -47,7 +51,7 @@ public class PatientQueryResultMapper {
                 DoctorDto doctorDto = DoctorDto.builder()
                         .firstName(doctorFirstName)
                         .lastName(doctorLastName)
-                        .totalPatients(totalPatients)
+                        .totalPatients(totalDoctorPatients)
                         .build();
 
                 VisitDto visitDto = VisitDto.builder()
@@ -59,8 +63,10 @@ public class PatientQueryResultMapper {
                 patientDto.getLastVisits().add(visitDto);
             }
         }
-
-        return new ArrayList<>(patientMap.values());
+        return PatientsGetResponse.builder()
+                .data(new ArrayList<>(patientMap.values()))
+                .count(totalPatients)
+                .build();
     }
 
     private String formatTimestamp(Timestamp timestamp) {

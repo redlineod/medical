@@ -1,6 +1,5 @@
 package com.redline.medical.services.impl;
 
-import com.redline.medical.dto.PatientDto;
 import com.redline.medical.dto.PatientsGetResponse;
 import com.redline.medical.mappers.PatientQueryResultMapper;
 import com.redline.medical.repositories.PatientRepository;
@@ -22,17 +21,10 @@ public class PatientServiceImpl implements PatientService {
 
         int offset = page * size;
 
-        List<Object[]> queryResults = patientRepository.findPatientsWithLastVisits(
+        List<Object[]> queryResults = patientRepository.findPatientsWithLastVisitsAndCount(
                 search, doctorIds, size, offset);
 
-        List<PatientDto> patients = queryResultMapper.convertToPatientDtos(queryResults);
-
-        long totalCount = patientRepository.countPatients(search, doctorIds);
-
-        return PatientsGetResponse.builder()
-                .data(patients)
-                .count((int) totalCount)
-                .build();
+        return queryResultMapper.convertToPatientGetResponse(queryResults);
     }
 
 }
