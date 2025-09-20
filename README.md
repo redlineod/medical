@@ -95,13 +95,13 @@ Content type: `application/json`
 
 ## API Documentation
 
-📚 **Live API Documentation**: [View on GitHub Pages](https://your-username.github.io/medical/)
+📚 **Live API Documentation**: [View on GitHub Pages](https://redlineod.github.io/medical/)
 
 ### Quick Links
-- 🌐 **Interactive Docs**: [Swagger UI](https://your-username.github.io/medical/)
-- 📄 **OpenAPI Spec (YAML)**: [Download](https://your-username.github.io/medical/api.yaml)
-- 📄 **OpenAPI Spec (JSON)**: [Download](https://your-username.github.io/medical/api.json)
-- ✏️ **Edit in Swagger Editor**: [Import to editor.swagger.io](https://editor.swagger.io/?url=https://your-username.github.io/medical/api.yaml)
+- 🌐 **Interactive Docs**: [Swagger UI](https://redlineod.github.io/medical/)
+- 📄 **OpenAPI Spec (YAML)**: [Download](https://redlineod.github.io/medical/api.yaml)
+- 📄 **OpenAPI Spec (JSON)**: [Download](https://redlineod.github.io/medical/api.json)
+- ✏️ **Edit in Swagger Editor**: [Import to editor.swagger.io](https://editor.swagger.io/?url=https://redlineod.github.io/medical/api.yaml)
 
 ## Local Development
 
