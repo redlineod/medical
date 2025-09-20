@@ -3,30 +3,344 @@ name: Generate API Documentation
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 
 jobs:
   docs:
     runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     
-    - name: Set up JDK 21
-      uses: actions/setup-java@v3
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+        
+    - name: Create docs directory
+      run: mkdir -p docs
+        
+    - name: Generate static OpenAPI spec
+      run: |
+        cat > docs/api.yaml << 'EOF'
+        openapi: 3.0.1
+        info:
+          title: Medical Management API
+          description: This API exposes endpoints to manage medical appointments and patient data.
+          version: 1.0.0
+          contact:
+            name: Medical API Support
+            email: support@redlinemedical.com
+        servers:
+        - url: http://localhost:8080
+          description: Development server
+        paths:
+          /api/v1/visits:
+            post:
+              tags:
+              - Visits
+              summary: Create a new visit
+              description: Creates a new medical visit appointment between a patient and doctor
+              operationId: createVisit
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/VisitCreateRequest'
+              responses:
+                '201':
+                  description: Visit created successfully
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/VisitCreateResponse'
+                '400':
+                  description: Invalid input data
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/ApiErrorResponse'
+                '404':
+                  description: Doctor or Patient not found
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/ApiErrorResponse'
+                '409':
+                  description: Doctor has conflicting appointment
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/ApiErrorResponse'
+          /api/v1/patients:
+            get:
+              tags:
+              - Patients
+              summary: Get patients with pagination
+              description: Retrieves a paginated list of patients with their last visits
+              operationId: getPatients
+              parameters:
+              - name: page
+                in: query
+                description: Page number (0-based)
+                required: false
+                schema:
+                  type: integer
+                  default: 0
+              - name: size
+                in: query
+                description: Number of items per page
+                required: false
+                schema:
+                  type: integer
+                  default: 20
+              - name: search
+                in: query
+                description: Search term for patient names
+                required: false
+                schema:
+                  type: string
+              - name: doctorIds
+                in: query
+                description: Filter by doctor IDs
+                required: false
+                style: form
+                explode: false
+                schema:
+                  type: array
+                  items:
+                    type: integer
+                    format: int64
+              responses:
+                '200':
+                  description: Patients retrieved successfully
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/PatientsGetResponse'
+                '500':
+                  description: Server error
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/ApiErrorResponse'
+        components:
+          schemas:
+            VisitCreateRequest:
+              required:
+              - doctorId
+              - end
+              - patientId
+              - start
+              type: object
+              properties:
+                doctorId:
+                  type: integer
+                  description: ID of the doctor for the visit
+                  format: int64
+                  example: 1
+                patientId:
+                  type: integer
+                  description: ID of the patient for the visit
+                  format: int64
+                  example: 1
+                start:
+                  type: string
+                  description: Start date and time of the visit
+                  format: date-time
+                  example: "2024-12-25T10:00:00"
+                end:
+                  type: string
+                  description: End date and time of the visit
+                  format: date-time
+                  example: "2024-12-25T11:00:00"
+            VisitCreateResponse:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  description: ID of the created visit
+                  format: int64
+                  example: 1
+                start:
+                  type: string
+                  format: date-time
+                  example: "2024-12-25T10:00:00"
+                end:
+                  type: string
+                  format: date-time
+                  example: "2024-12-25T11:00:00"
+            PatientsGetResponse:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/PatientDto'
+                count:
+                  type: integer
+                  format: int32
+                  description: Total number of patients
+                  example: 9
+            PatientDto:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                  example: "John"
+                lastName:
+                  type: string
+                  example: "Doe"
+                lastVisits:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/VisitDto'
+            VisitDto:
+              type: object
+              properties:
+                start:
+                  type: string
+                  format: date-time
+                  example: "2024-12-25T10:00:00"
+                end:
+                  type: string
+                  format: date-time
+                  example: "2024-12-25T11:00:00"
+                doctor:
+                  $ref: '#/components/schemas/DoctorDto'
+            DoctorDto:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                  example: "Jane"
+                lastName:
+                  type: string
+                  example: "Smith"
+                totalPatients:
+                  type: integer
+                  format: int32
+                  description: Total number of patients this doctor has
+                  example: 25
+            ApiErrorResponse:
+              type: object
+              properties:
+                status:
+                  type: integer
+                  format: int32
+                  description: HTTP status code
+                  example: 400
+                message:
+                  type: string
+                  description: Error message
+                  example: "Validation failed"
+        EOF
+        
+    - name: Install yq
+      run: |
+        sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+        sudo chmod +x /usr/local/bin/yq
+        
+    - name: Convert YAML to JSON
+      run: |
+        yq eval -o=json docs/api.yaml > docs/api.json
+        
+    - name: Create Swagger UI page
+      run: |
+        cat > docs/index.html << 'EOF'
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Medical API Documentation</title>
+            <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui.css" />
+            <style>
+                html { 
+                    box-sizing: border-box; 
+                    overflow: -moz-scrollbars-vertical; 
+                    overflow-y: scroll; 
+                }
+                *, *:before, *:after { 
+                    box-sizing: inherit; 
+                }
+                body { 
+                    margin: 0; 
+                    background: #fafafa; 
+                }
+                .custom-header {
+                    background: #1b1b1b;
+                    color: white;
+                    padding: 20px;
+                    text-align: center;
+                    margin-bottom: 20px;
+                }
+                .custom-header h1 {
+                    margin: 0;
+                    font-size: 24px;
+                }
+                .custom-header p {
+                    margin: 5px 0 0 0;
+                    opacity: 0.8;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="custom-header">
+                <h1>Medical Management API</h1>
+                <p>Interactive API Documentation</p>
+            </div>
+            <div id="swagger-ui"></div>
+            
+            <script src="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui-bundle.js"></script>
+            <script src="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui-standalone-preset.js"></script>
+            <script>
+            window.onload = function() {
+              const ui = SwaggerUIBundle({
+                url: './api.yaml',
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                  SwaggerUIBundle.presets.apis,
+                  SwaggerUIStandalonePreset
+                ],
+                plugins: [
+                  SwaggerUIBundle.plugins.DownloadUrl
+                ],
+                layout: "StandaloneLayout",
+                tryItOutEnabled: true,
+                supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch']
+              });
+              
+              window.ui = ui;
+            }
+            </script>
+        </body>
+        </html>
+        EOF
+        
+    - name: Verify generated files
+      run: |
+        echo "Generated files:"
+        ls -la docs/
+        echo "API YAML size:"
+        wc -l docs/api.yaml
+        echo "API JSON size:"  
+        wc -l docs/api.json
+        
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
+      
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
       with:
-        java-version: '21'
-        distribution: 'temurin'
-        
-    - name: Start Application
-      run: |
-        mvn spring-boot:run &
-        sleep 30
-        
-    - name: Generate Docs
-      run: |
-        curl http://localhost:8080/api-docs.yaml > docs/api.yaml
+        path: ./docs
         
     - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./docs
+      id: deployment
+      uses: actions/deploy-pages@v4
