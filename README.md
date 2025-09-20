@@ -201,7 +201,7 @@ Example 400:
 
 
 
-## Frontend UI
+## Frontend UI (AI generated!!!)
 A modern React + Vite single-page app is included to interact with this API.
 
 Features:
