@@ -2,7 +2,6 @@ DROP TABLE IF EXISTS visits;
 DROP TABLE IF EXISTS patients;
 DROP TABLE IF EXISTS doctors;
 
--- Пациенты
 CREATE TABLE patients
 (
     id         BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -10,7 +9,6 @@ CREATE TABLE patients
     last_name  VARCHAR(100) NOT NULL
 );
 
--- Врачи
 CREATE TABLE doctors
 (
     id         BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -19,7 +17,6 @@ CREATE TABLE doctors
     timezone   VARCHAR(50)  NOT NULL
 );
 
--- Визиты
 CREATE TABLE visits
 (
     id             BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -32,14 +29,12 @@ CREATE TABLE visits
 );
 
 
--- Врачи
 INSERT INTO doctors (id, first_name, last_name, timezone)
 VALUES (1, 'Olena', 'Kovalenko', 'Europe/Kyiv'),
        (2, 'Ivan', 'Petrenko', 'Europe/Kyiv'),
        (3, 'Sofia', 'Melnyk', 'Europe/Warsaw'),
        (4, 'Mykola', 'Shevchenko', 'Europe/London');
 
--- Пациенты
 INSERT INTO patients (id, first_name, last_name)
 VALUES (1, 'Andriy', 'Kushnir'),
        (2, 'Iryna', 'Lysenko'),
@@ -51,7 +46,6 @@ VALUES (1, 'Andriy', 'Kushnir'),
        (8, 'Halyna', 'Semenova'),
        (9, 'Andriy', 'Kravchuk');
 
--- Визиты (UTC)
 INSERT INTO visits (id, start_datetime, end_datetime, patient_id, doctor_id)
 VALUES (1, '2025-09-20 07:00:00', '2025-09-20 07:30:00', 1, 1),
        (2, '2025-09-20 08:00:00', '2025-09-20 08:30:00', 1, 2),

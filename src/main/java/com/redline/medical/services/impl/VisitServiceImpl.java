@@ -12,13 +12,16 @@ import com.redline.medical.services.VisitService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class VisitServiceImpl implements VisitService {
 
     private final VisitRepository visitRepository;
@@ -27,10 +30,13 @@ public class VisitServiceImpl implements VisitService {
 
     @Override
     public VisitCreateResponse createVisit(VisitCreateRequest request) {
+        validateCreateVisitRequest(request);
+        
         Doctor doctor = doctorRepository.findById(request.getDoctorId())
                 .orElseThrow(() -> new EntityNotFoundException("Doctor not found"));
         Patient patient = patientRepository.findById(request.getPatientId())
                 .orElseThrow(() -> new EntityNotFoundException("Patient not found"));
+        
         ZoneId doctorZone = ZoneId.of(doctor.getTimezone());
         ZonedDateTime startLocal = request.getStart().atZone(doctorZone);
         ZonedDateTime endLocal = request.getEnd().atZone(doctorZone);
@@ -53,12 +59,44 @@ public class VisitServiceImpl implements VisitService {
                 .startDateTime(startUtc)
                 .endDateTime(endUtc)
                 .build();
-        visitRepository.save(visit);
+        
+        Visit savedVisit = visitRepository.save(visit);
 
         return VisitCreateResponse.builder()
-                .id(visit.getId())
-                .start(request.getStart())
-                .end(request.getEnd())
+                .id(savedVisit.getId())
+                .start(savedVisit.getStartDateTime().atZone(doctorZone).toLocalDateTime())
+                .end(savedVisit.getEndDateTime().atZone(doctorZone).toLocalDateTime())
                 .build();
+    }
+    
+    private void validateCreateVisitRequest(VisitCreateRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("Visit request cannot be null");
+        }
+        
+        if (request.getDoctorId() == null || request.getDoctorId() <= 0) {
+            throw new IllegalArgumentException("Valid doctor ID is required");
+        }
+        
+        if (request.getPatientId() == null || request.getPatientId() <= 0) {
+            throw new IllegalArgumentException("Valid patient ID is required");
+        }
+        
+        if (request.getStart() == null) {
+            throw new IllegalArgumentException("Start time is required");
+        }
+        
+        if (request.getEnd() == null) {
+            throw new IllegalArgumentException("End time is required");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        if (request.getStart().isBefore(now)) {
+            throw new IllegalArgumentException("Visit cannot be scheduled in the past");
+        }
+        
+        if (request.getEnd().isBefore(request.getStart().plusMinutes(15))) {
+            throw new IllegalArgumentException("Visit must be at least 15 minutes long");
+        }
     }
 }

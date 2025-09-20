@@ -3,6 +3,7 @@ package com.redline.medical.controllers;
 import com.redline.medical.dto.ApiErrorResponse;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -54,4 +55,49 @@ public class ErrorController {
 
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<ApiErrorResponse> handleDataAccessException(DataAccessException e) {
+        log.error("Database access error: {}", e.getMessage(), e);
+        ApiErrorResponse response = ApiErrorResponse.builder()
+                .message("Database service is currently unavailable. Please try again later.")
+                .status(HttpStatus.SERVICE_UNAVAILABLE.value())
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.SERVICE_UNAVAILABLE);
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ApiErrorResponse> handleRuntimeException(RuntimeException e) {
+        log.error("Runtime error occurred: {}", e.getMessage(), e);
+
+        // Check if the exception message indicates a database-related issue
+        if (e.getMessage() != null && e.getMessage().contains("database")) {
+            ApiErrorResponse response = ApiErrorResponse.builder()
+                    .message("Database service is currently unavailable. Please try again later.")
+                    .status(HttpStatus.SERVICE_UNAVAILABLE.value())
+                    .build();
+            return new ResponseEntity<>(response, HttpStatus.SERVICE_UNAVAILABLE);
+        }
+
+        // Generic runtime exception handling
+        ApiErrorResponse response = ApiErrorResponse.builder()
+                .message("An unexpected error occurred. Please try again later.")
+                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiErrorResponse> handleGenericException(Exception e) {
+        log.error("Unexpected error occurred: {}", e.getMessage(), e);
+        ApiErrorResponse response = ApiErrorResponse.builder()
+                .message("An unexpected error occurred. Please try again later.")
+                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
 }
