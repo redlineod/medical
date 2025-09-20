@@ -22,7 +22,7 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
                 SELECT COUNT(*) AS total_count FROM patient_filter
              ),
              patient_page AS (
-                 SELECT id, ROW_NUMBER() OVER (ORDER BY id) as rn
+                 SELECT id
                  FROM patient_filter
                  ORDER BY id
                  LIMIT :size OFFSET :offset
