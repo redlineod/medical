@@ -91,6 +91,20 @@ Seed data provides 9 patients, 4 doctors (with timezones), and several visits (t
 ## API
 Base URL: `/api/v1`
 Content type: `application/json`
+# Medical Management System
+
+## API Documentation
+
+📚 **Live API Documentation**: [View on GitHub Pages](https://your-username.github.io/medical/)
+
+### Quick Links
+- 🌐 **Interactive Docs**: [Swagger UI](https://your-username.github.io/medical/)
+- 📄 **OpenAPI Spec (YAML)**: [Download](https://your-username.github.io/medical/api.yaml)
+- 📄 **OpenAPI Spec (JSON)**: [Download](https://your-username.github.io/medical/api.json)
+- ✏️ **Edit in Swagger Editor**: [Import to editor.swagger.io](https://editor.swagger.io/?url=https://your-username.github.io/medical/api.yaml)
+
+## Local Development
+
 
 ### GET /api/v1/patients
 Returns a paged list of patients with their most recent visit per doctor.
